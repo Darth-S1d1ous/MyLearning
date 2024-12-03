@@ -221,9 +221,9 @@ private:
         int leftSize = size(node->left);
         if(k1 <= leftSize && k2 <= leftSize) {
             return maxElement(node->left, k1, k2);
-        } else if (k1 > leftSize && k2 > leftSize) {
+        } else if (k1 > leftSize + 1 && k2 > leftSize + 1) {
             return maxElement(node->right, k1 - leftSize - 1, k2 - leftSize - 1);
-        } else if (k1 <= leftSize && k2 > leftSize) {
+        } else if (k1 <= leftSize && k2 > leftSize + 1) {
             return max(max(maxElement(node->left, k1, leftSize), maxElement(node->right, 0, k2 - leftSize - 1)), node->value);
         } else if (k1 == k2){
             return node->value;
