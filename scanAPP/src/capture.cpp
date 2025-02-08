@@ -65,12 +65,14 @@ class CameraStreamCapture
             printf("Start capture");
 
             currentPath = std::filesystem::current_path();
-            rootPath = currentPath;
+            rootPath = currentPath.parent_path();
+            printf("Current Path: %s\n", currentPath.c_str());
+            configPath = rootPath / "config" / "scan.yaml";
 
             camera::Camera cam(0, "scan.yaml");
             
             if (readConfig() == -1) {
-                std::cerr << "[ERROR] Reading config failed!" << std::endl;
+                std::cerr << "[ERROR] capture reading config failed!" << std::endl;
             }
 
             saveCount = 0;
@@ -119,7 +121,7 @@ class CameraStreamCapture
                 // Load the YAML file
                 YAML::Node config = YAML::LoadFile(configPath);
                 if (config["scene_name"]) {
-                    savePath = rootPath.parent_path() / "data" / config["scene_name"].as<std::string>() / "scene";
+                    savePath = rootPath. / "data" / config["scene_name"].as<std::string>() / "scene";
                     if (copyFile(configPath, rootPath.parent_path() / "data" / config["scene_name"].as<std::string>() / "config" / "scan.yaml")) {
                         std::cout << "File copy operation succeeded.\n";
                     } else {

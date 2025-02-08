@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.0)
 
 project(scanAPP)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(OrbbecSDK_DIR /home/zaphod/lib/OrbbecSDK)
+set(OrbbecSDK_DIR /home/john/lib/OrbbecSDK)
 find_package(OrbbecSDK REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -42,4 +45,5 @@ target_link_libraries(capture
     ${Boost_LIBRARIES}
     yaml-cpp
     OrbbecSDK::OrbbecSDK
+    pthread
 )
