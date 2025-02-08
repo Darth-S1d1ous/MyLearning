@@ -82,13 +82,11 @@ class CameraStreamCapture
 
             saveCount = 0;
 
-            std::cerr << "=== capture ok1 ===" << std::endl;
             while(cam.windowOK()) {
                 if (keyEventProcess() == false) {
                     break;
                 }
-                std::cerr << "=== capture ok2 ===" << std::endl;
-
+                
                 pthread_mutex_lock(&lock);
                 bool saveImage = false;
                 saveImage = save;
@@ -102,12 +100,10 @@ class CameraStreamCapture
                 pthread_mutex_unlock(&lockIMU);
 
                 auto cameraFuture = cam.asyncGetImage(images);
-                std::cerr << "=== capture ok3 ===" << std::endl;
                 auto imuFuture = cam.asyncGetIMU(imuData);
                 cameraFuture.get();
                 imuFuture.get();
 
-                std::cerr << "=== capture ok4 ===" << std::endl;
                 if (!images[0].empty()) {
                     if (saveImage) {
                         std::string filename = saveColorPath / ("color_" + formatNumber(saveCount) + ".jpg");
@@ -157,7 +153,7 @@ class CameraStreamCapture
                 YAML::Node config = YAML::LoadFile(configPath);
                 if (config["scene_name"]) {
                     savePath = rootPath / "data" / config["scene_name"].as<std::string>() / "scene";
-                    if (copyFile(configPath, rootPath.parent_path() / "data" / config["scene_name"].as<std::string>() / "config" / "scan.yaml")) {
+                    if (copyFile(configPath, rootPath / "data" / config["scene_name"].as<std::string>() / "config" / "scan.yaml")) {
                         std::cout << "File copy operation succeeded.\n";
                     } else {
                         std::cout << "File copy operation failed.\n";

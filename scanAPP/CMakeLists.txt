@@ -19,18 +19,19 @@ include_directories(
     include
 )
 
-# add_executable(recorder src/record.cpp)
+add_executable(recorder src/record.cpp)
 
-# target_include_directories(recorder PUBLIC
-#     ${OpenCV_INCLUDE_DIRS}
-#     ${OrbbecSDK_INCLUDE_DIRS}
-# )
+target_include_directories(recorder PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
+    ${OrbbecSDK_INCLUDE_DIRS}
+)
 
-# target_link_libraries(recorder
-#     ${OpenCV_LIBS}
-#     yaml-cpp
-#     OrbbecSDK::OrbbecSDK
-# )
+target_link_libraries(recorder
+    ${OpenCV_LIBS}
+    yaml-cpp
+    OrbbecSDK::OrbbecSDK
+    pthread
+)
 
 add_executable(capture src/capture.cpp)
 

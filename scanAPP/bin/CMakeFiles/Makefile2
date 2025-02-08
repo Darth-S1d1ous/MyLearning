@@ -63,6 +63,7 @@ CMAKE_BINARY_DIR = /home/john/Project/MyLearning/scanAPP/bin
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/recorder.dir/all
 all: CMakeFiles/capture.dir/all
 .PHONY : all
 
@@ -71,8 +72,35 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
+clean: CMakeFiles/recorder.dir/clean
 clean: CMakeFiles/capture.dir/clean
 .PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/recorder.dir
+
+# All Build rule for target.
+CMakeFiles/recorder.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/john/Project/MyLearning/scanAPP/bin/CMakeFiles --progress-num=3,4 "Built target recorder"
+.PHONY : CMakeFiles/recorder.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/recorder.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/john/Project/MyLearning/scanAPP/bin/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/recorder.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/john/Project/MyLearning/scanAPP/bin/CMakeFiles 0
+.PHONY : CMakeFiles/recorder.dir/rule
+
+# Convenience name for target.
+recorder: CMakeFiles/recorder.dir/rule
+.PHONY : recorder
+
+# clean rule for target.
+CMakeFiles/recorder.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/clean
+.PHONY : CMakeFiles/recorder.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/capture.dir

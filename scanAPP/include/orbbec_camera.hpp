@@ -73,7 +73,7 @@ namespace camera
         Camera(int ind, std::string yamlName);
         ~Camera();
         //********** 原始信息转换线程 **********************/
-        void *HKWorkThread(void *p_handle);
+        void *HKWorkThread(void *args);
 
         //********** 输出摄像头信息 ***********************/
         bool PrintDeviceInfo(ob::DeviceInfo &deviceInfo);
@@ -393,7 +393,6 @@ namespace camera
                 }
                 std::lock_guard<std::mutex> lock(imuArgs->imuMutex);
                 std::cerr << imuArgs->ax << " " << imuArgs->ay << " " << imuArgs->az << " " << imuArgs->gx << " " << imuArgs->gy << " " << imuArgs->gz << std::endl;
-                std::cerr << "IMU ok2" << std::endl;
                 if (imuArgs->ax != 0.0f || imuArgs->ay != 0.0f || imuArgs->az || 0.0f || imuArgs->gx || 0.0f || imuArgs->gy || 0.0f || imuArgs->gz != 0.0f){
                     imuData[0] = imuArgs->ax;
                     imuData[1] = imuArgs->ay;
@@ -430,8 +429,8 @@ namespace camera
     void *Camera::HKWorkThread(void *args)
     {
         ThreadArgs *thread_args = (ThreadArgs *)args;
-        void *p_handle = thread_args->handle;
-        cv::Mat &frame = thread_args->frame;
+        // void *p_handle = thread_args->handle;
+        // cv::Mat &frame = thread_args->frame;
         cv::Mat &colorMat = thread_args->colorMat;
         cv::Mat &depthMat = thread_args->depthMat;
         bool &frame_empty = thread_args->frame_empty;

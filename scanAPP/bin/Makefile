@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named recorder
+
+# Build rule for target.
+recorder: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 recorder
+.PHONY : recorder
+
+# fast build rule for target.
+recorder/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/build
+.PHONY : recorder/fast
+
+#=============================================================================
 # Target rules for targets named capture
 
 # Build rule for target.
@@ -153,6 +166,30 @@ src/capture.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/capture.dir/build.make CMakeFiles/capture.dir/src/capture.cpp.s
 .PHONY : src/capture.cpp.s
 
+src/record.o: src/record.cpp.o
+.PHONY : src/record.o
+
+# target to build an object file
+src/record.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/src/record.cpp.o
+.PHONY : src/record.cpp.o
+
+src/record.i: src/record.cpp.i
+.PHONY : src/record.i
+
+# target to preprocess a source file
+src/record.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/src/record.cpp.i
+.PHONY : src/record.cpp.i
+
+src/record.s: src/record.cpp.s
+.PHONY : src/record.s
+
+# target to generate assembly for a file
+src/record.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recorder.dir/build.make CMakeFiles/recorder.dir/src/record.cpp.s
+.PHONY : src/record.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,9 +199,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... capture"
+	@echo "... recorder"
 	@echo "... src/capture.o"
 	@echo "... src/capture.i"
 	@echo "... src/capture.s"
+	@echo "... src/record.o"
+	@echo "... src/record.i"
+	@echo "... src/record.s"
 .PHONY : help
 
 
