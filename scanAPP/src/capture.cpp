@@ -121,7 +121,7 @@ class CameraStreamCapture
                 // Load the YAML file
                 YAML::Node config = YAML::LoadFile(configPath);
                 if (config["scene_name"]) {
-                    savePath = rootPath. / "data" / config["scene_name"].as<std::string>() / "scene";
+                    savePath = rootPath / "data" / config["scene_name"].as<std::string>() / "scene";
                     if (copyFile(configPath, rootPath.parent_path() / "data" / config["scene_name"].as<std::string>() / "config" / "scan.yaml")) {
                         std::cout << "File copy operation succeeded.\n";
                     } else {
@@ -131,7 +131,7 @@ class CameraStreamCapture
                     saveColorPath = savePath / "color";
                     saveDepthPath = savePath / "depth";
                     saveIMUPath = savePath / "imu";
-                    std::filesystem::create_directory(rootPath.parent_path() / "data" / config["scene_name"].as<std::string>());
+                    std::filesystem::create_directory(rootPath / "data" / config["scene_name"].as<std::string>());
                     std::filesystem::create_directory(savePath);
                     std::filesystem::create_directory(saveColorPath);
                     std::filesystem::create_directory(saveDepthPath);

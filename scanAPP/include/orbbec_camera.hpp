@@ -43,35 +43,6 @@ namespace camera
 
         ThreadArgs() : images{&colorMat, &depthMat} {}
     };
-//********** define ************************************/
-#define MAX_IMAGE_DATA_SIZE (4 * 3270 * 2048)
-    //********** frame ************************************/
-    //cv::Mat frame;
-    //********** frame_empty ******************************/
-    //bool frame_empty = 0;
-    //********** mutex ************************************/
-    //pthread_mutex_t mutex;
-    //********** CameraProperties config ************************************/
-    enum CamerProperties
-    {
-        CAP_PROP_FRAMERATE_ENABLE,  //帧数可调
-        CAP_PROP_FRAMERATE,         //帧数
-        CAP_PROP_BURSTFRAMECOUNT,   //外部一次触发帧数
-        CAP_PROP_HEIGHT,            //图像高度
-        CAP_PROP_WIDTH,             //图像宽度
-        CAP_PROP_EXPOSURE_TIME,     //曝光时间
-        CAP_PROP_GAMMA_ENABLE,      //伽马因子可调
-        CAP_PROP_GAMMA,             //伽马因子
-        CAP_PROP_GAINAUTO,          //亮度
-        CAP_PROP_SATURATION_ENABLE, //饱和度可调
-        CAP_PROP_SATURATION,        //饱和度
-        CAP_PROP_OFFSETX,           //X偏置
-        CAP_PROP_OFFSETY,           //Y偏置
-        CAP_PROP_TRIGGER_MODE,      //外部触发
-        CAP_PROP_TRIGGER_SOURCE,    //触发源
-        CAP_PROP_LINE_SELECTOR      //触发线
-
-    };
 
     enum E_TriggerMode{
         TriggerMode_Off = 0,
@@ -120,14 +91,6 @@ namespace camera
 
         ThreadArgs* args;
         std::unique_ptr<std::thread> workthread;
-        //********** frame ************************************/
-        //cv::Mat frame;
-        //********** frame_empty ******************************/
-        //bool frame_empty = 0;
-        //********** mutex ************************************/
-        //pthread_mutex_t mutex;    
-        //********** handle ******************************/
-        //void *handle;
         
         std::shared_ptr<ob::Device> device;
         int width = 1280, height = 960, fps = 30;
