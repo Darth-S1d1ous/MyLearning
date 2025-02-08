@@ -1,7 +1,6 @@
 #include <iostream>
 #include <limits>
 #include <map>
-#include <chrono>
 using namespace std;
 
 struct Node {
@@ -9,13 +8,15 @@ struct Node {
     int height = 0;
     int size = 1;
     long long sum = value;
+    long long largest;
     Node* parent;
     Node* left;
     Node* right;
-    Node(long long value) : value(value), parent(nullptr), left(nullptr), right(nullptr) {}
-    Node(long long value, Node* parent) : value(value), parent(parent), left(nullptr), right(nullptr) {}
+    Node(long long value) : value(value), largest(value), parent(nullptr), left(nullptr), right(nullptr) {}
+    Node(long long value, Node* parent) : value(value), largest(value), parent(parent), left(nullptr), right(nullptr) {}
 };
-
+long long readInt();
+void writeInt(long long x);
 class SizeTree {
 private:
     Node* root;
@@ -33,6 +34,10 @@ private:
         return node == nullptr ? 0 : node->sum;
     }
 
+    long long largest(Node* node) {
+        return node == nullptr ? numeric_limits<long long>::min() : node->largest;
+    }
+
     int balanceFactor(Node* node) {
         return node == nullptr ? 0 : height(node->left) - height(node->right);
     }
@@ -42,6 +47,7 @@ private:
             node->height = max(height(node->left), height(node->right)) + 1;
             node->size = size(node->left) + size(node->right) + 1;
             node->sum = sum(node->left) + sum(node->right) + node->value;
+            node->largest = max(node->value, max(largest(node->left), largest(node->right)));
         }
     }
 
@@ -166,40 +172,26 @@ private:
         return cur;
     }
 
-    Node* findKth(Node* node, int k) {
-        if(!node) return nullptr;
-        int leftSize = size(node->left);
-        if(k == leftSize + 1) {
-            return node;
-        } else if (k <= leftSize) {
-            return findKth(node->left, k);
-        } else {
-            return findKth(node->right, k - leftSize - 1);
-        }
-    }
+    long long sumKth(int k) {
+        if(!k) return 0;
 
-    long long sumKth(Node* node, int k) {
-        if(!node) return 0;
-        int leftSize = size(node->left);
-        if(k <= leftSize) {
-            return sumKth(node->left, k);
-        } else if (k == leftSize + 1) {
-            return sum(node->left) + node->value;
-        } else {
-            return sum(node->left) + node->value + sumKth(node->right, k - leftSize - 1);
-        }
-    }
+        Node* cur = root;
+        long long ret = sum(cur->left) + cur->value;
+        int currentSize = size(cur->left) + 1;
 
-    long long sumKth2(Node* node, int k) {
-        if(!node) return 0;
-        int leftSize = size(node->left);
-        if(k <= leftSize) {
-            return sumKth2(node->left, k);
-        } else if (k == leftSize + 1) {
-            return sum(node->left);
-        } else {
-            return sum(node->left) + node->value + sumKth2(node->right, k - leftSize - 1);
+        while(currentSize != k) {
+            if(currentSize < k) {
+                cur = cur->right;
+                ret += sum(cur->left) + cur->value;
+                currentSize += size(cur->left) + 1;
+            } else if (currentSize > k){
+                ret -= cur->value;
+                cur = cur->left;
+                currentSize -= size(cur->right) + 1;
+                ret -= sum(cur->right);
+            }
         }
+        return ret;
     }
 
     void preOrder(Node* node) {
@@ -217,22 +209,61 @@ private:
     }
 
     long long maxElement(Node* node, int k1, int k2) {
-        if(!node) return numeric_limits<int>::min();
+        if(!node) return numeric_limits<long long>::min();
+
+        long long ret = numeric_limits<long long>::min();
         int leftSize = size(node->left);
-        if(k1 <= leftSize && k2 <= leftSize) {
-            return maxElement(node->left, k1, k2);
-        } else if (k1 > leftSize + 1 && k2 > leftSize + 1) {
-            return maxElement(node->right, k1 - leftSize - 1, k2 - leftSize - 1);
-        } else if (k1 <= leftSize && k2 > leftSize + 1) {
-            return max(max(maxElement(node->left, k1, leftSize), maxElement(node->right, 0, k2 - leftSize - 1)), node->value);
-        } else if (k1 == k2){
-            return node->value;
-        } else if (k1 == leftSize + 1) {
-            return max(node->value, maxElement(node->right, 0, k2 - leftSize - 1));
-        } else if (k2 == leftSize + 1) {
-            return max(node->value, maxElement(node->left, k1, leftSize));
+        int rootIndex = leftSize + 1;
+        int bound = rootIndex + size(node->right);
+        
+        if(rootIndex >= k1 && rootIndex <= k2) {
+            ret = node->value;
         }
-        return numeric_limits<long long>::min();
+
+        if(k1 < rootIndex) {
+            if(k1 == 0 && k2 >= rootIndex - 1) {
+                ret = max(ret, largest(node->left));
+            } else {
+                ret = max(ret, maxElement(node->left, k1, min(rootIndex - 1, k2)));
+            }
+        }
+        if(k2 > rootIndex) {
+            if(k1 <= rootIndex + 1 && k2 == bound) {
+                ret = max(ret, largest(node->right));
+            } else {
+                ret = max(ret, maxElement(node->right, max(rootIndex + 1, k1) - rootIndex, k2 - rootIndex));
+            }
+        }
+        return ret;
+    }
+
+    long long maxElement2(Node* node, int k1, int k2) {
+        if(!node) return numeric_limits<long long>::min();
+
+        long long ret = numeric_limits<long long>::min();
+        int leftSize = size(node->left);
+        int rootIndex = leftSize + 1;
+        int bound = rootIndex + size(node->right);
+        
+        if(rootIndex >= k1 && rootIndex <= k2) {
+            ret = node->value;
+        }
+
+        if(k1 < rootIndex) {
+            if(k1 <= 0 && k2 >= rootIndex - 1) {
+                ret = max(ret, largest(node->left));
+            } else {
+                ret = max(ret, maxElement(node->left, k1, k2));
+            }
+        }
+        if(k2 > rootIndex) {
+            if(k1 <= rootIndex + 1 && k2 == bound) {
+                ret = max(ret, largest(node->right));
+            } else {
+                ret = max(ret, maxElement(node->right, k1 - rootIndex, k2 - rootIndex));
+            }
+        }
+        return ret;
     }
 
 public:
@@ -244,6 +275,21 @@ public:
 
     void removeKth(int k) {
         root = removeKth(root, k);
+    }
+
+    void findKth(int k) {
+        Node* cur = root;
+        int currentSize = size(cur->left) + 1;
+        while(currentSize != k) {
+            if(currentSize < k) {
+                cur = cur->right;
+                currentSize += size(cur->left) + 1;
+            } else if (currentSize > k){
+                cur = cur->left;
+                currentSize -= size(cur->right) + 1;
+            }
+        }
+        cout << cur->value << endl;
     }
 
     int indexOf(long long& value) {
@@ -263,18 +309,9 @@ public:
         cout << idx << endl;
         return idx;
     }
-
-    void findKth(int k) {
-        Node* node = findKth(root, k);
-        cout << (node == nullptr ? -1 : node->value) << endl;
-    }
-
-    void sumKth(int k) {
-        cout << sumKth(root, k) << endl;
-    }
-
+    
     void sumK1K2(int k1, int k2) {
-        cout << sumKth(root, k2) - sumKth2(root, k1) << endl;
+        cout << sumKth(k2) - sumKth(k1 - 1) << endl;
     }
 
     void maxElement(int k1, int k2) {
