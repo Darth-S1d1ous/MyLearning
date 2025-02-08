@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include "opencv2/core/mat.hpp"
 #include "opencv2/imgproc.hpp"
@@ -19,7 +20,6 @@
 #include <thread>
 #include <functional>
 
-bool save = false;
 
 namespace camera {
     int Camera::frameCount = 0;
@@ -27,6 +27,11 @@ namespace camera {
     int Camera::saveCount = 0;
     int Camera::saveCountIMU = 0;
 }
+
+pthread_mutex_t lock;
+pthread_mutex_t lockIMU;
+bool save = false;
+bool saveIMU = false;
 
 std::string formatNumber(int number) {
     std::ostringstream oss;
@@ -77,18 +82,32 @@ class CameraStreamCapture
 
             saveCount = 0;
 
+            std::cerr << "=== capture ok1 ===" << std::endl;
             while(cam.windowOK()) {
                 if (keyEventProcess() == false) {
                     break;
                 }
+                std::cerr << "=== capture ok2 ===" << std::endl;
 
+                pthread_mutex_lock(&lock);
                 bool saveImage = false;
                 saveImage = save;
                 save = false;
+                pthread_mutex_unlock(&lock);
+
+                pthread_mutex_lock(&lockIMU);
+                bool saveIMU_local = false;
+                saveIMU_local = saveIMU;
+                saveIMU = false;
+                pthread_mutex_unlock(&lockIMU);
 
                 auto cameraFuture = cam.asyncGetImage(images);
+                std::cerr << "=== capture ok3 ===" << std::endl;
+                auto imuFuture = cam.asyncGetIMU(imuData);
                 cameraFuture.get();
+                imuFuture.get();
 
+                std::cerr << "=== capture ok4 ===" << std::endl;
                 if (!images[0].empty()) {
                     if (saveImage) {
                         std::string filename = saveColorPath / ("color_" + formatNumber(saveCount) + ".jpg");
@@ -104,6 +123,22 @@ class CameraStreamCapture
                     }
                 }
                 
+                if (saveIMU_local) {
+                    std::string filename = saveIMUPath / ("imu_" + formatNumber(saveCountIMU) + ".txt");
+                    
+                    std::ofstream imuFile(filename, std::ios::app);
+                    if (imuFile.is_open()) {
+                        imuFile << imuData[0] << " " << imuData[1] << " " << imuData[2] << "\n";
+                        imuFile << imuData[3] << " " << imuData[4] << " " << imuData[5] << "\n";
+                        imuFile.close();
+                        printf("%d imu data saved to %s", saveCountIMU, filename.c_str());
+                    } else {
+                        std::cerr << "[Error]: Unable to open imu file " << filename << "\n";
+                    }          
+                    
+                    saveCountIMU++;
+                }
+
                 saveCount += saveImage;
             }
         }
@@ -156,7 +191,13 @@ class CameraStreamCapture
         bool keyEventProcess() {
             int key = cv::waitKey(20);
             if (key == 'c' || key == 'C') {
+                pthread_mutex_lock(&lock);
                 save = true;
+                pthread_mutex_unlock(&lock);
+
+                pthread_mutex_lock(&lockIMU);
+                saveIMU = true;
+                pthread_mutex_unlock(&lockIMU);
             }
             else if (key == 'e' || key == 'E')
             {
@@ -166,6 +207,7 @@ class CameraStreamCapture
         }
 
         std::vector<cv::Mat> images{std::vector<cv::Mat>(2)};
+        std::vector<float> imuData{std::vector<float>(6)};
         static int saveCount, saveCountIMU;
         std::filesystem::path currentPath, rootPath, configPath, savePath, saveColorPath, saveDepthPath, saveIMUPath;
         int width = 1280, height = 960, fps = 30;

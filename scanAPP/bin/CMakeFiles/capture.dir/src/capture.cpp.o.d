@@ -184,7 +184,10 @@ CMakeFiles/capture.dir/src/capture.cpp.o: \
  /usr/include/c++/9/bits/allocated_ptr.h \
  /usr/include/c++/9/bits/refwrap.h \
  /usr/include/c++/9/ext/aligned_buffer.h /usr/include/c++/9/bits/fs_dir.h \
- /usr/include/c++/9/bits/fs_ops.h /usr/include/c++/9/iostream \
+ /usr/include/c++/9/bits/fs_ops.h /usr/include/c++/9/fstream \
+ /usr/include/x86_64-linux-gnu/c++/9/bits/basic_file.h \
+ /usr/include/x86_64-linux-gnu/c++/9/bits/c++io.h \
+ /usr/include/c++/9/bits/fstream.tcc /usr/include/c++/9/iostream \
  /usr/local/include/opencv4/opencv2/core/mat.hpp \
  /usr/local/include/opencv4/opencv2/core/matx.hpp \
  /usr/local/include/opencv4/opencv2/core/cvdef.h \

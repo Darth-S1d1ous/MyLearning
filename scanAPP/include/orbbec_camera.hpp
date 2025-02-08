@@ -44,6 +44,11 @@ namespace camera
         ThreadArgs() : images{&colorMat, &depthMat} {}
     };
 
+    struct IMUThreadArgs {
+        float ax = 0.0, ay = 0.0, az = 0.0, gx = 0.0, gy = 0.0, gz = 0.0;
+        std::mutex imuMutex;
+    };
+
     enum E_TriggerMode{
         TriggerMode_Off = 0,
         TriggerMode_On = 1
@@ -81,7 +86,9 @@ namespace camera
         int readConfig();
         //********** 恢复默认参数 *************************/
         bool reset();
-        //********** 读图10个相机的原始图像 ********************************/
+        //********** 读取imu数据 **********************/
+        std::future<void> asyncGetIMU(std::vector<float> &imuData);
+        //********** 读取原始图像 ********************************/
         void ReadImg(std::vector<cv::Mat> &imagess);
         void TriggerCapture(std::vector<cv::Mat> &image);
         std::future<void> asyncGetImage(std::vector<cv::Mat> &image);
@@ -103,6 +110,13 @@ namespace camera
         std::shared_ptr<ob::Config> obConfig;
         ob::Pipeline pipeline;
         ob::FormatConvertFilter formatConvertFilter;
+
+        std::shared_ptr<ob::Device> dev;
+        IMUThreadArgs* imuArgs;
+        std::shared_ptr<ob::Config> imuConfig;
+        std::shared_ptr<ob::Pipeline> imuPipeline;
+        std::mutex imuFrameMutex;
+        
 
         int TriggerMode = TriggerMode_Off;
 
@@ -164,6 +178,58 @@ namespace camera
             depthProfile = depthProfiles->getVideoStreamProfile(640, 576, OB_FORMAT_Y16, fps);
         }
 
+        /************* imu stream ***********/
+        imuArgs = new IMUThreadArgs();
+        dev = pipeline.getDevice();
+        imuPipeline = std::make_shared<ob::Pipeline>(dev);
+        imuConfig = std::make_shared<ob::Config>();
+        try {
+            IMUThreadArgs* imuThreadArgs = (IMUThreadArgs* ) imuArgs;
+            float& ax = imuThreadArgs->ax;
+            float& ay = imuThreadArgs->ay;
+            float& az = imuThreadArgs->az;
+            float& gx = imuThreadArgs->gx;
+            float& gy = imuThreadArgs->gy;
+            float& gz = imuThreadArgs->gz;
+            
+            imuConfig->enableGyroStream();
+            imuConfig->enableAccelStream();
+            imuPipeline->start(imuConfig, [&](std::shared_ptr<ob::FrameSet> frameset) {
+                if (!frameset) {
+                    std::cerr << "Failed to get frameset" << std::endl;
+                    return;
+                }
+
+                auto count = frameset->frameCount();
+                if (count != 2) {
+                    std::cerr << "Frame count is not 2" << std::endl;
+                    return;
+                }
+
+                std::unique_lock<std::mutex> lk(imuFrameMutex);
+                auto frame_0 = frameset->getFrame(0);
+                auto gyroFrame = frame_0->as<ob::AccelFrame>();
+                ax = gyroFrame->value().x;
+                ay = gyroFrame->value().y;
+                az = gyroFrame->value().z;
+                printf("ax: %f, ay: %f, az: %f\n", ax, ay, az);
+
+                auto frame_1 = frameset->getFrame(1);
+                if (!frame_1) {
+                    std::cerr << "Failed to get frame 1" << std::endl;
+                    return;
+                }
+                auto accelFrame = frame_1->as<ob::GyroFrame>();
+                gx = accelFrame->value().x;
+                gy = accelFrame->value().y;
+                gz = accelFrame->value().z;
+                printf("gx: %f, gy: %f, gz: %f\n", gx, gy, gz);
+
+            });
+        } catch (...) {
+            std::cerr << "IMU stream not support!" << std::endl;
+        }
+
         obConfig->enableStream(depthProfile);
         obConfig->setDepthScaleRequire(false);
         obConfig->setAlignMode(ALIGN_D2C_SW_MODE);
@@ -191,9 +257,11 @@ namespace camera
             workthread->join();
 
         pipeline.stop();
+        imuPipeline->stop();
         args->app->close();
 
         delete args;
+        delete imuArgs;
     }
 
     //^ ********************************** Camera constructor************************************ //
@@ -316,6 +384,31 @@ namespace camera
     void Camera::TriggerCapture(std::vector<cv::Mat> &images){
     }
 
+    std::future<void> Camera::asyncGetIMU(std::vector<float> &imuData){
+        return std::async(std::launch::async, [&]{
+            do {
+                if (imuArgs == nullptr) {
+                    std::cerr << "IMU args is null" << std::endl;
+                    return;
+                }
+                std::lock_guard<std::mutex> lock(imuArgs->imuMutex);
+                std::cerr << imuArgs->ax << " " << imuArgs->ay << " " << imuArgs->az << " " << imuArgs->gx << " " << imuArgs->gy << " " << imuArgs->gz << std::endl;
+                std::cerr << "IMU ok2" << std::endl;
+                if (imuArgs->ax != 0.0f || imuArgs->ay != 0.0f || imuArgs->az || 0.0f || imuArgs->gx || 0.0f || imuArgs->gy || 0.0f || imuArgs->gz != 0.0f){
+                    imuData[0] = imuArgs->ax;
+                    imuData[1] = imuArgs->ay;
+                    imuData[2] = imuArgs->az;
+                    imuData[3] = imuArgs->gx;
+                    imuData[4] = imuArgs->gy;
+                    imuData[5] = imuArgs->gz;
+                } else {
+                    std::fill(imuData.begin(), imuData.end(), 0.0f);
+                }
+                std::cerr << "IMU ok3" << std::endl;
+            } while (imuData.empty());
+        });
+    }
+
     std::future<void> Camera::asyncGetImage(std::vector<cv::Mat> &images){
         if(TriggerMode == TriggerMode_Off){
             return std::async(std::launch::async, [&]{
@@ -362,6 +455,7 @@ namespace camera
             auto depthFrame = frameSet->depthFrame();
             if(colorFrame != nullptr && depthFrame != nullptr) {
                 app.addToRender({ colorFrame, depthFrame });
+                std::lock_guard<std::mutex> lock(mutex);
                 if(colorFrame != nullptr) {
                     if(colorFrame->format() != OB_FORMAT_RGB) {
                         if(colorFrame->format() == OB_FORMAT_MJPG) {
